@@ -80,7 +80,7 @@ const Comment = () => {
     const fetchComments = async () => {
       try {
         
-        const cachedComments = localStorage.getItem('allComments');
+        const cachedComments = localStorage.getItem('Comments');
         if (cachedComments) {
           setAllComments(JSON.parse(cachedComments));
           return; 
@@ -94,7 +94,7 @@ const Comment = () => {
           const data = await response.json();
           
           
-          localStorage.setItem('allComments', JSON.stringify(data));
+          localStorage.setItem('Comments', JSON.stringify(data));
           setAllComments(data);
         }
       } catch (error) {
