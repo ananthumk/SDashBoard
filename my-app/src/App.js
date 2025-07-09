@@ -13,10 +13,18 @@ function App() {
   useEffect(() => {
            const fetchProfileData = async() => {
             try {
+                const cachedData = localStorage.getItem('profileData')
+                if(cachedData){
+                  setData(JSON.parse(cachedData))
+                  return 
+                }
+               
                 const response = await fetch('https://jsonplaceholder.typicode.com/users')
                 if (response.ok){
                     const profileData  = await response.json();
-                    setData(profileData[1]); 
+                    const selectedProfile = profileData[1]
+                    setData(selectedProfile); 
+                    localStorage.setItem('profileData', JSON.stringify(selectedProfile))
                 }
             } catch (error) {
                 console.error("Error fetching profile data:", error);

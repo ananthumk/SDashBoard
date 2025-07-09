@@ -8,18 +8,46 @@ const Comment = () => {
   const [allComments, setAllComments] = useState([])
   const [pageNo, setPageNo] = useState(1)
   const [pageSize, setPageSize] = useState(10);
-  
   const [searchTerm, setSearchTerm] = useState('');
-
-
-  //console.log(searchTerm)
-
-
   const [postOrder, setPostOrder] = useState('');
   const [nameOrder, setNameOrder] = useState('');
   const [emailOrder, setEmailOrder] = useState('');
 
   
+  useEffect(() => {
+    const savedState = localStorage.getItem('commentState');
+    if (savedState) {
+      const {
+        pageNo: savedPageNo,
+        pageSize: savedPageSize,
+        searchTerm: savedSearchTerm,
+        postOrder: savedPostOrder,
+        nameOrder: savedNameOrder,
+        emailOrder: savedEmailOrder
+      } = JSON.parse(savedState);
+      
+      setPageNo(savedPageNo || 1);
+      setPageSize(savedPageSize || 10);
+      setSearchTerm(savedSearchTerm || '');
+      setPostOrder(savedPostOrder || '');
+      setNameOrder(savedNameOrder || '');
+      setEmailOrder(savedEmailOrder || '');
+    }
+  }, []);
+
+  
+  useEffect(() => {
+    const stateToSave = {
+      pageNo,
+      pageSize,
+      searchTerm,
+      postOrder,
+      nameOrder,
+      emailOrder
+    };
+    localStorage.setItem('commentState', JSON.stringify(stateToSave));
+  }, [pageNo, pageSize, searchTerm, postOrder, nameOrder, emailOrder]);
+
   const filteredComments = allComments.filter(comment => {
     const term = searchTerm.toLowerCase();
     return (
@@ -30,9 +58,7 @@ const Comment = () => {
     );
   });
 
-
   const sortedComments = [...filteredComments].sort((a, b) => {
-
     if (postOrder) {
       if (postOrder === 'asc') return a.postId - b.postId;
       if (postOrder === 'desc') return b.postId - a.postId;
@@ -49,15 +75,26 @@ const Comment = () => {
     }
     return 0;
   });
-  // console.log(filteredComments)
+
   useEffect(() => {
     const fetchComments = async () => {
       try {
+        
+        const cachedComments = localStorage.getItem('allComments');
+        if (cachedComments) {
+          setAllComments(JSON.parse(cachedComments));
+          return; 
+        }
+
+       
         const response = await fetch('https://jsonplaceholder.typicode.com/comments');
         if (!response.ok) {
           throw new Error('Network response was not ok');
         } else {
           const data = await response.json();
+          
+          
+          localStorage.setItem('allComments', JSON.stringify(data));
           setAllComments(data);
         }
       } catch (error) {
@@ -67,7 +104,6 @@ const Comment = () => {
     fetchComments();
   }, []);
 
- 
   const commentsToDisplay = sortedComments.slice((pageNo - 1) * pageSize, pageNo * pageSize);
   const total = sortedComments.length;
   const totalPages = Math.ceil(total / pageSize);
@@ -115,8 +151,13 @@ const Comment = () => {
         </div>
         <div className='search-container'>
           <IoIosSearch className='search-icon' />
-          <input type="search" onChange={(e) => setSearchTerm(e.target.value)}
-           placeholder='Search email, name , comment' className='search-inputs' />
+          <input 
+            type="search" 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder='Search email, name , comment' 
+            className='search-inputs' 
+          />
         </div>
       </div>
       <div className='table'>
@@ -143,28 +184,28 @@ const Comment = () => {
       </div>
       <div className='mobile-table'>
         {commentsToDisplay.map((comment) => (
-            <div className='each-table-card'>
-              <div className='info-part'>
-                  <div className='table-content'>
-                     <h2>Post ID</h2>
-                     <p>{comment.postId}</p>
-                  </div>
-                  <div className='table-name-email'>
-                    <div className='table-content'>
-                      <h2>Name</h2>
-                      <p>{comment.name}</p>
-                    </div>
-                    <div className='table-content'>
-                      <h2>Email</h2>
-                      <p>{comment.email}</p>
-                    </div>
-                  </div>
+          <div key={comment.id} className='each-table-card'>
+            <div className='info-part'>
+              <div className='table-content'>
+                <h2>Post ID</h2>
+                <p>{comment.postId}</p>
               </div>
-              <div className='comment-part'>
-                 <h2>Comment</h2>
-                 <p>{comment.body}</p>
+              <div className='table-name-email'>
+                <div className='table-content'>
+                  <h2>Name</h2>
+                  <p>{comment.name}</p>
+                </div>
+                <div className='table-content'>
+                  <h2>Email</h2>
+                  <p>{comment.email}</p>
+                </div>
               </div>
             </div>
+            <div className='comment-part'>
+              <h2>Comment</h2>
+              <p>{comment.body}</p>
+            </div>
+          </div>
         ))}
       </div>
       <div className='pagination-container'>
